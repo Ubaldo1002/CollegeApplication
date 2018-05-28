@@ -1,0 +1,23 @@
+<component name="ArtifactManager">
+  <artifact type="javafx" name="CollegeApplication">
+    <output-path>$PROJECT_DIR$/out/artifacts/CollegeApplication</output-path>
+    <properties id="javafx-properties">
+      <options>
+        <option name="appClass" value="Main" />
+        <option name="description" value="" />
+        <option name="height" value="600" />
+        <option name="htmlPlaceholderId" value="" />
+        <option name="nativeBundle" value="exe" />
+        <option name="title" value="College Application Process" />
+        <option name="vendor" value="" />
+        <option name="version" value="1.0.0" />
+      </options>
+    </properties>
+    <root id="root">
+      <element id="archive" name="JavaFXApp.jar">
+        <element id="module-output" name="CollegeApplication" />
+        <element id="module-output" name="College Application" />
+      </element>
+    </root>
+  </artifact>
+</component>
