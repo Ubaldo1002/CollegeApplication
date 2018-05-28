@@ -4,6 +4,8 @@ import user.StateAgeAccept;
 import user.States;
 import utilities.ParserHelper;
 
+import static utilities.ParserHelper.isValidNameFormat;
+
 public class ApplicationEvaluation {
     private ApplicantData applicantDataInformation;
 
@@ -60,7 +62,7 @@ o No “instant reject” criteria is hit (see below)
         }
 
 
-        if(RulesInstantAccept.getEqualOrHigherHighSchoolGPAScore() < GPAScoreResult){
+        if(RulesInstantAccept.getEqualOrHigherHighSchoolGPAScore()  > GPAScoreResult){
             return false;
         }
 
@@ -81,7 +83,7 @@ o No “instant reject” criteria is hit (see below)
     }
 
 
-    public boolean qualifyForInstantReject(){
+    public String qualifyForInstantReject(){
 /*
 1 or more felonies over the past 5 years.
 o High School GPA below 70% of scale provided on application. For example, 2.8 on a 4.0
@@ -91,33 +93,21 @@ o The applicant’s first and/or last name are not in the form of first letter c
 rest lower case.
 
  */
-       if ( RulesInstantReject.isAcceptFelonies() == !applicantDataInformation.isHasFelonyinLastFiveYears()
-           || RulesInstantReject.getBelowHighSchoolGPAScore() > GPAScoreResult
-           || RulesInstantReject.getAgeLowerThan() > applicantAge
-           || RulesInstantReject.isValidateFirstNameFormat() == isValidNameFormat(RulesInstantReject.isValidateFirstNameFormat(), applicantDataInformation.getFirstName())
-           || RulesInstantReject.isValidateLastNameFormat() ==  isValidNameFormat(RulesInstantReject.isValidateLastNameFormat() , applicantDataInformation.getLastName())
-       ){
-          return true;
-        }
+       if ( RulesInstantReject.isAcceptFelonies() == !applicantDataInformation.isHasFelonyinLastFiveYears() ){
+           return "Has Felonies in the last 5 Years";
+       }else if ( RulesInstantReject.getBelowHighSchoolGPAScore() > GPAScoreResult){
+           return "Has High School GPA Score below: " + RulesInstantReject.getBelowHighSchoolGPAScore();
+       }else if ( RulesInstantReject.getAgeLowerThan() > applicantAge){
+           return "Has Age Lower than: " + RulesInstantReject.getAgeLowerThan();
+       }else if ( RulesInstantReject.isValidFirstNameFormat() == !isValidNameFormat(RulesInstantReject.isValidFirstNameFormat(), applicantDataInformation.getFirstName())){
+           return "First Name Format is Incorrect";
+       }else if ( RulesInstantReject.isValidLastNameFormat() == !isValidNameFormat(RulesInstantReject.isValidLastNameFormat() , applicantDataInformation.getLastName())){
+           return "Last Name Format is Incorrect";
+       }
 
-        return false;
+        return "";
     }
 
 
-    private boolean isValidNameFormat(boolean runValidation, String name){
 
-        if (!runValidation){
-            return true;
-        }
-
-        String initialName = name.substring(0,1);
-        String restName = name.substring(1);
-
-        if(!initialName.equals(name.substring(0,1).toUpperCase())  ||
-                !restName.equals(name.substring(1).toLowerCase()) ){
-            return true;
-        }
-
-        return false;
-    }
 }

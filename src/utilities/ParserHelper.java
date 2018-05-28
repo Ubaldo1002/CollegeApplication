@@ -14,4 +14,21 @@ public class ParserHelper {
 
         return age;
     }
+
+    public static boolean isValidNameFormat(boolean runValidation, String name){
+
+        if (!runValidation){
+            return true;
+        }
+
+        String initialName = name.substring(0,1);
+        String restName = name.substring(1);
+
+        if(!initialName.equals(name.substring(0,1).toUpperCase())  ||
+                !restName.equals(name.substring(1).toLowerCase()) ){
+            return false;
+        }
+
+        return true;
+    }
 }

@@ -10,9 +10,9 @@ public class RulesInstantReject {
      */
     private static boolean acceptFelonies = false;
     private static float belowHighSchoolGPAScore= 70;
-    private static int ageLowerThan = 10;
+    private static int ageLowerThan = 0;
     private static boolean validateFirstNameFormat = true;
-    private static boolean validateLastNameFormat = false;
+    private static boolean validateLastNameFormat = true;
 
     public static boolean isAcceptFelonies() {
         return acceptFelonies;
@@ -26,11 +26,11 @@ public class RulesInstantReject {
         return ageLowerThan;
     }
 
-    public static boolean isValidateFirstNameFormat() {
+    public static boolean isValidFirstNameFormat() {
         return validateFirstNameFormat;
     }
 
-    public static boolean isValidateLastNameFormat() {
+    public static boolean isValidLastNameFormat() {
         return validateLastNameFormat;
     }
 }

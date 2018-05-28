@@ -2,7 +2,9 @@ import java.net.URL;
 import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.ResourceBundle;
 
 import javafx.event.ActionEvent;
@@ -16,6 +18,7 @@ import javafx.scene.control.TextField;
 import javafx.util.StringConverter;
 import user.Address;
 import user.ApplicantData;
+import user.ApplicationResult;
 import user.Score;
 import user.States;
 import utilities.ParserHelper;
@@ -31,6 +34,7 @@ public class Controller implements Initializable {
     public TextField txtCountry;
 
     public Label lblAge;
+    public Label lblApplicationStatus;
     public ComboBox<States> cmbStates;
     public ComboBox cmbSex;
 
@@ -46,71 +50,9 @@ public class Controller implements Initializable {
 
     private DialogMessage alert = new DialogMessage();
 
-    int ATCScore;
-    int SATScore;
-    Score GPAScoreResult;
+    private Score GPAScoreResult;
 
-    private void clearLayout(){
-
-        lblAge.setText("");
-        txtFirstName.setText("");
-        txtLastName.setText("");
-        datePickerBirthday.getEditor().clear();
-
-        txtAddress.setText("");
-        txtCity.setText("");
-
-        txtZipCode.setText("");
-        txtCountry.setText("");
-
-        cmbStates.getSelectionModel().clearSelection();
-        cmbSex.getSelectionModel().clearSelection();
-
-        txtACTScoreValue.setText("");
-        txtSATScoreValue.setText("");
-        txtGPAScoreValue.setText("");
-        txtGPAScoreTotal.setText("");
-
-        chckBoxIsAnyFelony.setSelected(false);
-
-    }
-
-    public void btnSubmitFormOnAction(ActionEvent actionEvent) {
-        if(fieldValidation()) {
-            Address myAddress = new Address(txtAddress.getText(), txtCity.getText(), cmbStates.getSelectionModel().getSelectedItem(), Integer.parseInt(txtZipCode.getText()));
-
-            boolean hasFelonies = false;
-            if (chckBoxIsAnyFelony.isSelected()) {
-                hasFelonies = true;
-            }
-
-            ApplicantData applicantData = new ApplicantData(txtFirstName.getText(), txtLastName.getText(), birthday, myAddress
-                    , SATScore, ATCScore, GPAScoreResult, hasFelonies);
-
-            ApplicationEvaluation applicationEvaluation = new ApplicationEvaluation(applicantData);
-            boolean qualifyForInstantReject = applicationEvaluation.qualifyForInstantReject();
-
-            if (qualifyForInstantReject) {
-                alert.displayMessage(Alert.AlertType.INFORMATION, "Application Result", "Your application was rejected based on 'Instant Reject' Rules"
-                        , "Your application was automatically Rejected");
-            } else {
-
-                boolean isApproved = applicationEvaluation.qualifyForInstantAccept(qualifyForInstantReject);
-                if (isApproved) {
-                    alert.displayMessage(Alert.AlertType.INFORMATION, "Application Result", "Your application was accepted based on 'Instant Accept' Rules"
-                            , "Your application was automatically Accepted");
-                } else {
-                    alert.displayMessage(Alert.AlertType.INFORMATION, "Application Result", "Your application was marked for Further Review based on 'Instant Reject/Instant Accept' Rules"
-                            , "Your application was automatically marked to Further Review");
-                }
-            }
-        }
-    }
-
-    public void btnCleanFormOnAction(ActionEvent actionEvent) {
-        clearLayout();
-    }
-
+    List<StudentsApplication>  studentsApplicationList = new ArrayList<>();
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -123,6 +65,54 @@ public class Controller implements Initializable {
         txtCountry.setText("United States");
 
     }
+
+
+    public void btnSubmitFormOnAction(ActionEvent actionEvent) {
+        if(fieldValidation()) {
+            Address myAddress = new Address(txtAddress.getText(), txtCity.getText(), cmbStates.getSelectionModel().getSelectedItem(), Integer.parseInt(txtZipCode.getText()));
+
+            boolean hasFelonies = false;
+            if (chckBoxIsAnyFelony.isSelected()) {
+                hasFelonies = true;
+            }
+
+            int ATCScore = Integer.parseInt(txtACTScoreValue.getText());
+            int SATScore = Integer.parseInt(txtSATScoreValue.getText());
+            ApplicantData applicantData = new ApplicantData(txtFirstName.getText(), txtLastName.getText(), birthday, myAddress
+                    , SATScore, ATCScore, GPAScoreResult, hasFelonies);
+
+            ApplicationEvaluation applicationEvaluation = new ApplicationEvaluation(applicantData);
+            String qualifyForInstantReject = applicationEvaluation.qualifyForInstantReject();
+
+            lblApplicationStatus.setText(qualifyForInstantReject);
+
+            if (!qualifyForInstantReject.equals("")) {
+                studentsApplicationList.add(new StudentsApplication(applicantData, ApplicationResult.INSTANT_REJECTED, new Date()));
+                alert.displayMessage(Alert.AlertType.INFORMATION, "Application Result", "Your application was rejected based on 'Instant Reject' Rules"
+                        , "Your application was automatically Rejected");
+            } else {
+
+                boolean isApproved = applicationEvaluation.qualifyForInstantAccept(false);
+                if (isApproved) {
+                    studentsApplicationList.add(new StudentsApplication(applicantData, ApplicationResult.INSTANT_ACCEPTED, new Date()));
+
+                    alert.displayMessage(Alert.AlertType.INFORMATION, "Application Result", "Your application was accepted based on 'Instant Accept' Rules"
+                            , "Your application was automatically Accepted");
+                } else {
+                    studentsApplicationList.add(new StudentsApplication(applicantData, ApplicationResult.FURTHER_REVIEW, new Date()));
+
+                    alert.displayMessage(Alert.AlertType.INFORMATION, "Application Result", "Your application was marked for Further Review based on 'Instant Reject/Instant Accept' Rules"
+                            , "Your application was automatically marked to Further Review");
+                }
+            }
+        }
+    }
+
+    public void btnCleanFormOnAction(ActionEvent actionEvent) {
+        clearLayout();
+    }
+
+
 
 
     private Boolean fieldValidation(){
@@ -300,6 +290,32 @@ public class Controller implements Initializable {
                 }
             }
         });
+
+    }
+
+
+    private void clearLayout(){
+
+        lblAge.setText("");
+        lblApplicationStatus.setText("");
+        txtFirstName.setText("");
+        txtLastName.setText("");
+        datePickerBirthday.getEditor().clear();
+
+        txtAddress.setText("");
+        txtCity.setText("");
+
+        txtZipCode.setText("");
+
+        cmbStates.getSelectionModel().clearSelection();
+        cmbSex.getSelectionModel().clearSelection();
+
+        txtACTScoreValue.setText("");
+        txtSATScoreValue.setText("");
+        txtGPAScoreValue.setText("");
+        txtGPAScoreTotal.setText("");
+
+        chckBoxIsAnyFelony.setSelected(false);
 
     }
 }
