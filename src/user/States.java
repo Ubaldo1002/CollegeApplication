@@ -7,5 +7,5 @@ public enum States {
     , MO, MS, MT, NC, ND, NE, NH, NJ
     , NM, NV, NY, OH, OK, OR, PA
     , RI, SC, SD, TN, TX, UT
-    , VA, VT, WA, WI, WV, WY
+    , VA, VT, WA, WI, WV, WY, ANY
 }

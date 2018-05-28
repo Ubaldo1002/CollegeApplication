@@ -1,5 +1,6 @@
 import user.ApplicantData;
 import user.Score;
+import user.StateAgeAccept;
 import user.States;
 import utilities.ParserHelper;
 
@@ -13,14 +14,18 @@ public class ApplicationEvaluation {
     public ApplicationEvaluation(ApplicantData applicantDataInformation) {
         this.applicantDataInformation = applicantDataInformation;
 
-        this.applicantAge = ParserHelper.calculateAge(applicantDataInformation.getBirthDate());
+        try {
+            this.applicantAge = ParserHelper.calculateAge(applicantDataInformation.getBirthDate());
 
-        Score GPAScore = applicantDataInformation.getGPAScore();
-        this.GPAScoreResult = ( GPAScore.getScore() * 100)/ GPAScore.getTotalScore();
+            Score GPAScore = applicantDataInformation.getGPAScore();
+            this.GPAScoreResult = (GPAScore.getScore() * 100) / GPAScore.getTotalScore();
+        }catch(Exception err){
+            err.printStackTrace();
+        }
     }
 
-    public boolean qualifyForInstantAccept(){
-        /*
+    public boolean qualifyForInstantAccept(boolean wasInstantReject){
+        /* ALL must be met
         In-state (California) age 17 or older, and younger than 26; or older than 80 from any
 state.
 o High School GPA of 90% or higher of scale provided in their application. For example,
@@ -30,19 +35,49 @@ these, may be present in the applicant.
 o No “instant reject” criteria is hit (see below)
          */
 
-        if ((applicantDataInformation.getCurrentAddress().getState() == States.CA
-                && (applicantAge >= 17 && applicantAge<26) ) || applicantAge > 80 ){
-            return true;
+        if(!RulesInstantAccept.isInstantRejectAllowed()){
+            if(wasInstantReject)
+                return false;
         }
 
-        if(GPAScoreResult > 90 ||
-                (applicantDataInformation.getSATScore().getScore()>1920 || applicantDataInformation.getACTScore().getScore()>27)){
-            return true;
+        boolean meetAgeAndState = false;
+        for(StateAgeAccept ageRules : RulesInstantAccept.getStateAndAge()){
+            if(ageRules.getState().equals(States.ANY)){
+                if (applicantAge >= ageRules.getStartRangeYearOld() && applicantAge < ageRules.getEndRangeYearOld()){
+                    meetAgeAndState = true;
+                    break;
+                }
+            }else if(ageRules.getState() == applicantDataInformation.getCurrentAddress().getState()){
+                if (applicantAge >= ageRules.getStartRangeYearOld() && applicantAge< ageRules.getEndRangeYearOld()){
+                    meetAgeAndState = true;
+                    break;
+                }
+            }
+
+        }
+        if(!meetAgeAndState){
+            return false;
         }
 
 
+        if(RulesInstantAccept.getEqualOrHigherHighSchoolGPAScore() < GPAScoreResult){
+            return false;
+        }
 
-        return false;
+        if(applicantDataInformation.getACTScore() > 0){
+            if (RulesInstantAccept.getGreaterACTScore() > applicantDataInformation.getACTScore()){
+                return false;
+            }
+        }
+
+        if(applicantDataInformation.getSATScore() > 0){
+            if (RulesInstantAccept.getGreaterSATScore() > applicantDataInformation.getSATScore()){
+                return false;
+            }
+        }
+
+
+        return true;
     }
 
 
@@ -56,18 +91,25 @@ o The applicant’s first and/or last name are not in the form of first letter c
 rest lower case.
 
  */
-        if ( applicantDataInformation.isHasFelonyinLastFiveYears() || GPAScoreResult < 70 || applicantAge < 0
-                || validateNameFormat(applicantDataInformation.getFirstName())
-                || validateNameFormat(applicantDataInformation.getLastName())){
-            return true;
+       if ( RulesInstantReject.isAcceptFelonies() == !applicantDataInformation.isHasFelonyinLastFiveYears()
+           || RulesInstantReject.getBelowHighSchoolGPAScore() > GPAScoreResult
+           || RulesInstantReject.getAgeLowerThan() > applicantAge
+           || RulesInstantReject.isValidateFirstNameFormat() == isValidNameFormat(RulesInstantReject.isValidateFirstNameFormat(), applicantDataInformation.getFirstName())
+           || RulesInstantReject.isValidateLastNameFormat() ==  isValidNameFormat(RulesInstantReject.isValidateLastNameFormat() , applicantDataInformation.getLastName())
+       ){
+          return true;
         }
-
 
         return false;
     }
 
 
-    private boolean validateNameFormat(String name){
+    private boolean isValidNameFormat(boolean runValidation, String name){
+
+        if (!runValidation){
+            return true;
+        }
+
         String initialName = name.substring(0,1);
         String restName = name.substring(1);
 

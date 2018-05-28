@@ -76,36 +76,34 @@ public class Controller implements Initializable {
     }
 
     public void btnSubmitFormOnAction(ActionEvent actionEvent) {
-        if(fieldValidation()){
-            Address myAddress = new Address(txtAddress.getText(), txtCity.getText(), cmbStates.getSelectionModel().getSelectedItem(),Integer.parseInt(txtZipCode.getText()));
+        if(fieldValidation()) {
+            Address myAddress = new Address(txtAddress.getText(), txtCity.getText(), cmbStates.getSelectionModel().getSelectedItem(), Integer.parseInt(txtZipCode.getText()));
 
             boolean hasFelonies = false;
-            if(chckBoxIsAnyFelony.isSelected()){
+            if (chckBoxIsAnyFelony.isSelected()) {
                 hasFelonies = true;
             }
 
-            ApplicantData applicantData = new ApplicantData(txtFirstName.getText(), txtLastName.getText(),birthday,myAddress
-                    ,SATScore, ATCScore, GPAScoreResult, hasFelonies);
+            ApplicantData applicantData = new ApplicantData(txtFirstName.getText(), txtLastName.getText(), birthday, myAddress
+                    , SATScore, ATCScore, GPAScoreResult, hasFelonies);
 
             ApplicationEvaluation applicationEvaluation = new ApplicationEvaluation(applicantData);
-            boolean isRejected = applicationEvaluation.qualifyForInstantReject();
+            boolean qualifyForInstantReject = applicationEvaluation.qualifyForInstantReject();
 
-            if(isRejected){
-                alert.displayMessage(Alert.AlertType.INFORMATION,"Application Result","Your application was rejected based on 'Instant Reject' Rules"
-                        ,"Your application was automatically Rejected");
-            }else{
-                boolean isApproved = applicationEvaluation.qualifyForInstantAccept();
-                if(isApproved){
-                    alert.displayMessage(Alert.AlertType.INFORMATION,"Application Result","Your application was accepted based on 'Instant Accept' Rules"
-                            ,"Your application was automatically Accepted");
-                }else{
-                    alert.displayMessage(Alert.AlertType.INFORMATION,"Application Result","Your application was marked for Further Review based on 'Instant Reject/Instant Accept' Rules"
-                            ,"Your application was automatically marked to Further Review");
+            if (qualifyForInstantReject) {
+                alert.displayMessage(Alert.AlertType.INFORMATION, "Application Result", "Your application was rejected based on 'Instant Reject' Rules"
+                        , "Your application was automatically Rejected");
+            } else {
+
+                boolean isApproved = applicationEvaluation.qualifyForInstantAccept(qualifyForInstantReject);
+                if (isApproved) {
+                    alert.displayMessage(Alert.AlertType.INFORMATION, "Application Result", "Your application was accepted based on 'Instant Accept' Rules"
+                            , "Your application was automatically Accepted");
+                } else {
+                    alert.displayMessage(Alert.AlertType.INFORMATION, "Application Result", "Your application was marked for Further Review based on 'Instant Reject/Instant Accept' Rules"
+                            , "Your application was automatically marked to Further Review");
                 }
             }
-
-            int a = 0;
-
         }
     }
 
