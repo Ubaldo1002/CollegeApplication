@@ -2,22 +2,21 @@ package user;
 
 import java.util.Date;
 
-public class Applicant {
+public class ApplicantData {
 
     private String firstName;
     private String lastName;
     private Date birthDate;
     private Address currentAddress;
-    private Score SATScore;
-    private Score ACTScore;
+    private int SATScore;
+    private int ACTScore;
     private Score GPAScore;
 
 
     private boolean hasFelonyinLastFiveYears;
-    private int numberOfFelonies;
 
-    public Applicant(String firstName, String lastName, Date birthDate, Address currentAddress, Score SATScore
-            , Score ACTScore, Score GPAScore, boolean hasFelonyinLastFiveYears, int numberOfFelonies) {
+    public ApplicantData(String firstName, String lastName, Date birthDate, Address currentAddress, int SATScore
+            , int ACTScore, Score GPAScore, boolean hasFelonyinLastFiveYears) {
         this.firstName = firstName;
         this.lastName = lastName;
         this.birthDate = birthDate;
@@ -26,7 +25,6 @@ public class Applicant {
         this.ACTScore = ACTScore;
         this.GPAScore = GPAScore;
         this.hasFelonyinLastFiveYears = hasFelonyinLastFiveYears;
-        this.numberOfFelonies = numberOfFelonies;
     }
 
     public String getFirstName() {
@@ -45,11 +43,11 @@ public class Applicant {
         return currentAddress;
     }
 
-    public Score getSATScore() {
+    public int getSATScore() {
         return SATScore;
     }
 
-    public Score getACTScore() {
+    public int getACTScore() {
         return ACTScore;
     }
 
@@ -61,7 +59,4 @@ public class Applicant {
         return hasFelonyinLastFiveYears;
     }
 
-    public int getNumberOfFelonies() {
-        return numberOfFelonies;
-    }
 }

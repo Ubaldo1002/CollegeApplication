@@ -5,17 +5,20 @@ import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.ResourceBundle;
 
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Alert;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.DatePicker;
+import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.util.StringConverter;
+import user.Address;
+import user.ApplicantData;
+import user.Score;
 import user.States;
+import utilities.ParserHelper;
 
 public class Controller implements Initializable {
 
@@ -27,13 +30,12 @@ public class Controller implements Initializable {
     public TextField txtZipCode;
     public TextField txtCountry;
 
-    public ComboBox cmbStates;
+    public Label lblAge;
+    public ComboBox<States> cmbStates;
     public ComboBox cmbSex;
 
     public TextField txtACTScoreValue;
-    public TextField txtACTScoreTotal;
     public TextField txtSATScoreValue;
-    public TextField txtSATScoreTotal;
     public TextField txtGPAScoreValue;
     public TextField txtGPAScoreTotal;
 
@@ -44,7 +46,13 @@ public class Controller implements Initializable {
 
     private DialogMessage alert = new DialogMessage();
 
+    int ATCScore;
+    int SATScore;
+    Score GPAScoreResult;
+
     private void clearLayout(){
+
+        lblAge.setText("");
         txtFirstName.setText("");
         txtLastName.setText("");
         datePickerBirthday.getEditor().clear();
@@ -59,9 +67,7 @@ public class Controller implements Initializable {
         cmbSex.getSelectionModel().clearSelection();
 
         txtACTScoreValue.setText("");
-        txtACTScoreTotal.setText("");
         txtSATScoreValue.setText("");
-        txtSATScoreTotal.setText("");
         txtGPAScoreValue.setText("");
         txtGPAScoreTotal.setText("");
 
@@ -71,6 +77,34 @@ public class Controller implements Initializable {
 
     public void btnSubmitFormOnAction(ActionEvent actionEvent) {
         if(fieldValidation()){
+            Address myAddress = new Address(txtAddress.getText(), txtCity.getText(), cmbStates.getSelectionModel().getSelectedItem(),Integer.parseInt(txtZipCode.getText()));
+
+            boolean hasFelonies = false;
+            if(chckBoxIsAnyFelony.isSelected()){
+                hasFelonies = true;
+            }
+
+            ApplicantData applicantData = new ApplicantData(txtFirstName.getText(), txtLastName.getText(),birthday,myAddress
+                    ,SATScore, ATCScore, GPAScoreResult, hasFelonies);
+
+            ApplicationEvaluation applicationEvaluation = new ApplicationEvaluation(applicantData);
+            boolean isRejected = applicationEvaluation.qualifyForInstantReject();
+
+            if(isRejected){
+                alert.displayMessage(Alert.AlertType.INFORMATION,"Application Result","Your application was rejected based on 'Instant Reject' Rules"
+                        ,"Your application was automatically Rejected");
+            }else{
+                boolean isApproved = applicationEvaluation.qualifyForInstantAccept();
+                if(isApproved){
+                    alert.displayMessage(Alert.AlertType.INFORMATION,"Application Result","Your application was accepted based on 'Instant Accept' Rules"
+                            ,"Your application was automatically Accepted");
+                }else{
+                    alert.displayMessage(Alert.AlertType.INFORMATION,"Application Result","Your application was marked for Further Review based on 'Instant Reject/Instant Accept' Rules"
+                            ,"Your application was automatically marked to Further Review");
+                }
+            }
+
+            int a = 0;
 
         }
     }
@@ -114,7 +148,7 @@ public class Controller implements Initializable {
         }
 
         if( datePickerBirthday.getEditor().getText().equals("")){
-            alert.displayMessage(Alert.AlertType.ERROR,"Missing Birthday Info","Birthday is required","Capture your Birtday Date in the Picker");
+            alert.displayMessage(Alert.AlertType.ERROR,"Missing Birthday Info","Birthday is required, Choose the date from the Picker","Capture your Birthday Date clicking the Date Picker calendar and select the date");
             txtGPAScoreTotal.requestFocus();
             return false;
         }else{
@@ -124,8 +158,10 @@ public class Controller implements Initializable {
                 if(!birthdayInPicker.contains(":")){
                     birthdayInPicker = birthdayInPicker + " 00:00:00";
                 }
-                Timestamp lastCalibrationDate = Timestamp.valueOf(birthdayInPicker);
-                birthday = new Date(lastCalibrationDate.getTime());
+                Timestamp birthDayPicked = Timestamp.valueOf(birthdayInPicker);
+                birthday = new Date(birthDayPicked.getTime());
+
+                lblAge.setText("Your Age is : "+String.valueOf(ParserHelper.calculateAge(birthday)));
 
             }catch(Exception err){
                 err.printStackTrace();
@@ -157,60 +193,24 @@ public class Controller implements Initializable {
             return false;
         }else{
             if(txtZipCode.getText().length() != 5){
-                alert.displayMessage(Alert.AlertType.ERROR,"Zip Code is Incorrect","Zip Code should be a 5 digits size, please correct the Zip Code"
-                        ,"Zip Code in United States are a 5 digit number");
+                alert.displayMessage(Alert.AlertType.ERROR,"Zip Code is Incorrect","Zip Code must be a 5 digits number, please type the correct the Zip Code"
+                        ,"Zip Code in United States is a 5 digit number");
                 txtZipCode.setText("");
                 txtZipCode.requestFocus();
                 return false;
             }
         }
 
-
-        //Score
-        if(txtACTScoreValue.getText().equals("")){
-            alert.displayMessage(Alert.AlertType.ERROR,"ACT Score Result is Missing","Applicant ACT Score Result is required","Capture your ACT Score Result in the Field");
+        //can be only one of these of both
+        if(txtACTScoreValue.getText().equals("") && txtSATScoreValue.getText().equals("")){
+            alert.displayMessage(Alert.AlertType.ERROR,"ACT or SAT Score Result are Missing","ApplicantData ACT Score or SAT Score Result is required","Capture your ApplicantData ACT Score or SAT Score Result in the correct Field");
             txtACTScoreValue.requestFocus();
             return false;
         }
-        if(txtACTScoreTotal.getText().equals("")){
-            alert.displayMessage(Alert.AlertType.ERROR,"ACT Test value is Missing","ACT Test value is required","Capture your ACT Total Result in the Field");
-            txtACTScoreTotal.requestFocus();
-            return false;
-        }else{
-            double result = Double.valueOf(txtACTScoreValue.getText());
-            double total = Double.valueOf(txtACTScoreTotal.getText());
 
-            if(result > total){
-                alert.displayMessage(Alert.AlertType.ERROR,"ACT values are incorrect","Applicant ACT Test result is greater than the actual test total value","Applicant ACT Test result must be equal or less than the Test total value");
-                txtACTScoreTotal.requestFocus();
-                return false;
-            }
-
-        }
-
-        if(txtSATScoreValue.getText().equals("")){
-            alert.displayMessage(Alert.AlertType.ERROR,"SAT Score Result is Missing","Applicant SAT Score result is required","Capture your SAT Score Result in the Field");
-            txtSATScoreValue.requestFocus();
-            return false;
-        }
-        if(txtSATScoreTotal.getText().equals("")){
-            alert.displayMessage(Alert.AlertType.ERROR,"SAT Test value is Missing","SAT test value is required","Capture your SAT Total Result in the Field");
-            txtSATScoreTotal.requestFocus();
-            return false;
-        }else{
-            double result = Double.valueOf(txtSATScoreValue.getText());
-            double total = Double.valueOf(txtSATScoreTotal.getText());
-
-            if(result > total){
-                alert.displayMessage(Alert.AlertType.ERROR,"SAT values are incorrect","Applicant SAT Test result is greater than the actual test total value","Applicant SAT Test result must be equal or less than the Test total value");
-                txtSATScoreTotal.requestFocus();
-                return false;
-            }
-
-        }
 
         if(txtGPAScoreValue.getText().equals("")){
-            alert.displayMessage(Alert.AlertType.ERROR,"High School GPA Total Value is Missing","Applicant High School GPA Score result is required","Capture your High School GPA Total Result in the Field");
+            alert.displayMessage(Alert.AlertType.ERROR,"High School GPA Total Value is Missing","ApplicantData High School GPA Score result is required","Capture your High School GPA Total Result in the Field");
             txtGPAScoreValue.requestFocus();
             return false;
         }
@@ -219,13 +219,16 @@ public class Controller implements Initializable {
             txtGPAScoreTotal.requestFocus();
             return false;
         }else{
-            double result = Double.valueOf(txtGPAScoreValue.getText());
-            double total = Double.valueOf(txtGPAScoreTotal.getText());
+            float result = Float.valueOf(txtGPAScoreValue.getText());
+            float total = Float.valueOf(txtGPAScoreTotal.getText());
 
             if(result > total){
-                alert.displayMessage(Alert.AlertType.ERROR,"High School GPA values are incorrect","Applicant High School GPA Test result is greater than the actual test total value","Applicant High School GPA Test result must be equal or less than the Test total value");
+                alert.displayMessage(Alert.AlertType.ERROR,"High School GPA values are incorrect","ApplicantData High School GPA Test result: " + txtGPAScoreValue.getText()
+                        + " is greater than the actual test total value: "+ txtGPAScoreTotal.getText(),"ApplicantData High School GPA Test result must be equal or less than the Test total value");
                 txtGPAScoreTotal.requestFocus();
                 return false;
+            }else{
+                GPAScoreResult = new Score(result, total);
             }
 
         }
@@ -239,7 +242,6 @@ public class Controller implements Initializable {
             }
 
         }
-
 
         return true;
     }
@@ -259,25 +261,11 @@ public class Controller implements Initializable {
             }
         });
 
-        txtACTScoreTotal.textProperty().addListener((observable, oldValue, newValue) -> {
-            if (!newValue.matches("\\d*(\\.\\d*)?")) {
-                txtACTScoreTotal.setText(oldValue);
-            }
-        });
-
         txtSATScoreValue.textProperty().addListener((observable, oldValue, newValue) -> {
             if (!newValue.matches("\\d*(\\.\\d*)?")) {
                 txtSATScoreValue.setText(oldValue);
             }
         });
-
-
-        txtSATScoreTotal.textProperty().addListener((observable, oldValue, newValue) -> {
-            if (!newValue.matches("\\d*(\\.\\d*)?")) {
-                txtSATScoreTotal.setText(oldValue);
-            }
-        });
-
 
         txtGPAScoreValue.textProperty().addListener((observable, oldValue, newValue) -> {
             if (!newValue.matches("\\d*(\\.\\d*)?")) {
